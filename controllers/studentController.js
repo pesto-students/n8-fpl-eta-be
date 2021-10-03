@@ -4,7 +4,6 @@ const firebase = require('../db');
 const Student = require('../models/student');
 const firestore = firebase.firestore();
 
-
 const addStudent = async (req, res, next) => {
     try {
         const data = req.body;

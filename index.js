@@ -3,7 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config');
-const studentRoutes = require('./routes/student-routes');
+// const studentRoutes = require('./routes/student-routes');
+const userRoutes = require('./routes/user-routes');
 
 const app = express();
 
@@ -18,7 +19,7 @@ const landingPage = async (req, res, next) => {
         res.status(400).send(error.message);
     }
 }
-app.use('/api', studentRoutes.routes);
+app.use('/api', userRoutes.routes);
 app.use('/', landingPage);
 
 app.listen(config.port, () => console.log('App is listening on ' + config.port));
