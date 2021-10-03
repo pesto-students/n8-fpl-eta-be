@@ -18,8 +18,7 @@ const landingPage = async (req, res, next) => {
         res.status(400).send(error.message);
     }
 }
-
-app.use('/', landingPage);
 app.use('/api', studentRoutes.routes);
+app.use('/', landingPage);
 
 app.listen(config.port, () => console.log('App is listening on ' + config.port));
