@@ -3,8 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config');
-// const studentRoutes = require('./routes/student-routes');
-// const pingRoutes = require('./routes/ping-routes');
+const studentRoutes = require('./routes/student-routes');
 
 const app = express();
 
@@ -21,9 +20,6 @@ const landingPage = async (req, res, next) => {
 }
 
 app.use('/', landingPage);
-// app.use('/api', studentRoutes.routes);
-// app.use('/ping', pingRoutes.routes);
-
-
+app.use('/api', studentRoutes.routes);
 
 app.listen(config.port, () => console.log('App is listening on ' + config.port));
