@@ -3,7 +3,7 @@
 const admin = require('firebase-admin');
 const serviceAccount = require('../serviceAccountKey.json');
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 const db = admin.firestore();
 
@@ -56,6 +56,31 @@ const getUser = async (req, res, next) => {
     }
 }
 
+const checkUser = async (req, res, next) => {
+    try {
+        const email = req.params.email;
+        const usersRef = db.collection('users');
+        const userArray = [];
+        const snapshot = await usersRef.where('email', '==', email).get();
+        if (snapshot.empty) {
+            res.send(`{ "info" : "No record found"}`);
+        } else {
+            snapshot.forEach(doc => {
+                const { name, email } = doc.data();
+                const user = new User(
+                    doc.id,
+                    name,
+                    email
+                );
+                userArray.push(user);
+            });
+            res.send(`{"info": "Users Exists"}`);
+        }
+    } catch (error) {
+        res.status(404).send(`{error: ${error}}`);
+    }
+}
+
 const updateUser = async (req, res, next) => {
     try {
         const id = req.params.id;
@@ -83,5 +108,6 @@ module.exports = {
     getAllUsers,
     getUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    checkUser
 }
