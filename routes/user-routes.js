@@ -6,10 +6,8 @@ const {
 } = require('../controllers/userController');
 
 const router = express.Router();
-
 router.get('/user/:id', getUser);
-router.post('/user', addUser);
-router.get('/user/check/:email', checkUser);
+router.post('/user/check', checkUser);
 module.exports = {
     routes: router
 }

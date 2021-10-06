@@ -58,12 +58,18 @@ const getUser = async (req, res, next) => {
 
 const checkUser = async (req, res, next) => {
     try {
-        const email = req.params.email;
+        const email = req.body.email;
         const usersRef = db.collection('users');
         const userArray = [];
         const snapshot = await usersRef.where('email', '==', email).get();
         if (snapshot.empty) {
-            res.send(`{ "info" : "No record found"}`);
+            try {
+                const data = req.body;
+                await db.collection('users').doc().set(data);
+                res.send(`{"status": "SUCCESS", "message":"User created successully"}`);
+            } catch (error) {
+                res.status(400).send(`{"status": "FAIL", "message":${error}}`);
+            }
         } else {
             snapshot.forEach(doc => {
                 const { name, email } = doc.data();
