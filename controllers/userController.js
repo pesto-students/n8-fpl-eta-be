@@ -1,11 +1,9 @@
 'use strict';
 
-const admin = require('firebase-admin');
-const serviceAccount = require('../serviceAccountKey.json');
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
+
+
 
 const User = require('../models/user');
 const addUser = async (req, res, next) => {
@@ -55,6 +53,26 @@ const getUser = async (req, res, next) => {
         res.status(400).send(error.message);
     }
 }
+
+
+const userAuth = async (req, res, next) => {
+
+    const expiresIn = 1000 * 60 * 60;
+    admin
+        .auth()
+        .createSessionCookie(req.params.token, { expiresIn })
+        .then(
+            (sessionCookie) => {
+                const options = { maxAge: expiresIn, httpOnly: true };
+                res.cookie("session", sessionCookie, options);
+                res.status(200).send(JSON.stringify({ status: "success" }));
+            },
+            (error) => {
+                res.status(401).send(JSON.stringify({ status: "UNAUTHORIZED" }));
+            }
+        );
+
+};
 
 const checkUser = async (req, res, next) => {
     try {
@@ -115,5 +133,6 @@ module.exports = {
     getUser,
     updateUser,
     deleteUser,
-    checkUser
+    checkUser,
+    userAuth
 }
