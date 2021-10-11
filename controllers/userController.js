@@ -71,7 +71,6 @@ const userAuth = async (req, res, next) => {
                 res.status(401).send(JSON.stringify({ status: "UNAUTHORIZED" }));
             }
         );
-
 };
 
 const checkUser = async (req, res, next) => {
