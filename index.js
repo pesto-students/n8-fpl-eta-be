@@ -7,10 +7,10 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const config = require('./config');
-const userRoutes = require('./routes/user-routes');
 const { userAuth } = require('./controllers/userController');
 
 const admin = require('./firebase').firebaseAdmin;
+const challengeRoutes = require('./routes/challenge-routes');
 
 
 const app = express();
@@ -37,9 +37,10 @@ const landingPage = async (req, res, next) => {
         });
 }
 
-app.use('/api/:token', userAuth)
+// app.use('/api/:token', userAuth)
 
-app.use('/api', userRoutes.routes);
+app.use('/api/challenge', challengeRoutes.routes);
+// app.use('/api', userRoutes.routes);
 
 app.use('/', landingPage);
 
