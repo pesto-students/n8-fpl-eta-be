@@ -1,11 +1,9 @@
 'use strict';
 
-const admin = require('firebase-admin');
-const serviceAccount = require('../serviceAccountKey.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
+
+
 
 const User = require('../models/user');
 const addUser = async (req, res, next) => {
@@ -56,6 +54,56 @@ const getUser = async (req, res, next) => {
     }
 }
 
+
+const userAuth = async (req, res, next) => {
+
+    const expiresIn = 1000 * 60 * 60;
+    admin
+        .auth()
+        .createSessionCookie(req.params.token, { expiresIn })
+        .then(
+            (sessionCookie) => {
+                const options = { maxAge: expiresIn, httpOnly: true };
+                res.cookie("session", sessionCookie, options);
+                res.status(200).send(JSON.stringify({ status: "success" }));
+            },
+            (error) => {
+                res.status(401).send(JSON.stringify({ status: "UNAUTHORIZED" }));
+            }
+        );
+};
+
+const checkUser = async (req, res, next) => {
+    try {
+        const email = req.body.email;
+        const usersRef = db.collection('users');
+        const userArray = [];
+        const snapshot = await usersRef.where('email', '==', email).get();
+        if (snapshot.empty) {
+            try {
+                const data = req.body;
+                await db.collection('users').doc().set(data);
+                res.send(`{"status": "SUCCESS", "message":"User created successully"}`);
+            } catch (error) {
+                res.status(400).send(`{"status": "FAIL", "message":${error}}`);
+            }
+        } else {
+            snapshot.forEach(doc => {
+                const { name, email } = doc.data();
+                const user = new User(
+                    doc.id,
+                    name,
+                    email
+                );
+                userArray.push(user);
+            });
+            res.send(`{"info": "Users Exists"}`);
+        }
+    } catch (error) {
+        res.status(404).send(`{error: ${error}}`);
+    }
+}
+
 const updateUser = async (req, res, next) => {
     try {
         const id = req.params.id;
@@ -83,5 +131,7 @@ module.exports = {
     getAllUsers,
     getUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    checkUser,
+    userAuth
 }
