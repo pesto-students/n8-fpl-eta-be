@@ -1,1 +1,1 @@
-# NINJA-TEMPLATE
+# fpl-application-server
