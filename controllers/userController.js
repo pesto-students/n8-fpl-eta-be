@@ -3,8 +3,6 @@
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
-
-
 const User = require('../models/user');
 const addUser = async (req, res, next) => {
     try {

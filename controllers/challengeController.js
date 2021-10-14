@@ -35,6 +35,22 @@ const getChallenges = async (req, res, next) => {
     }
 };
 
+const getChallenge = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const challenge = await db.collection('challenges').doc(id);
+        const data = await challenge.get();
+        if (!data.exists) {
+            res.status(404).send(JSON.stringify({status:'Challenge not found'}));
+        } else {
+            res.send(data.data());
+        }
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+}
+
+
 
 const getChallengesByFilter = async (req, res, next) => {
     try {
@@ -132,5 +148,6 @@ const getChallengesByFilter = async (req, res, next) => {
 
 module.exports = {
     getChallenges,
-    getChallengesByFilter
+    getChallengesByFilter,
+    getChallenge
 }
