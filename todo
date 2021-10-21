@@ -1,4 +1,4 @@
- - TODO portfolio api 
+ - portfolio api 
     post portfolio 
     get  portfolio 
     get  portfolioByUserID
@@ -24,7 +24,9 @@
     - subscribe with stock list from stocks list got challenge 
     - on message calculate the leaderboard
     - broadcast to connections filter by challengeId
+ 
  - TODO onClose cron job
     - calculate final winners 
     - save the ranking with challenge object 
-    
+
+ - TODO API documentation - https://medium.com/swlh/automatic-api-documentation-in-node-js-using-swagger-dd1ab3c78284   

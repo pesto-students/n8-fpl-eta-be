@@ -8,8 +8,6 @@ const Challenge = require('../models/challenge');
 const getChallenges = async (req, res, next) => {
     try {
 
-        console.log(`GetChallenges Controller`);
-
         const challenges = await db.collection('challenges');
         const data = await challenges.get();
         const challengesArray = [];
