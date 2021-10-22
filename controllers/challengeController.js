@@ -1,9 +1,27 @@
 'use strict';
 
+// unique id generator
+const { v4 : uuidv4 } = require('uuid');
+
+// firebase setup to access firestore
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
+
 const Challenge = require('../models/challenge');
+
+const postChallenge = async (req, res, next) => {
+    try {
+        const data = req.body;
+        const _c = {...data, status:'NOT_LIVE'};
+        const id = uuidv4();
+        await db.collection('challenges').doc(id).set(_c);
+        // onStart cron job
+        res.status(200).send(JSON.stringify({ status: `challenge created successfully` }));
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
 
 const getChallenges = async (req, res, next) => {
     try {
@@ -38,7 +56,7 @@ const getChallenge = async (req, res, next) => {
         const challenge = await db.collection('challenges').doc(id);
         const data = await challenge.get();
         if (!data.exists) {
-            res.status(404).send(JSON.stringify({status:'Challenge not found'}));
+            res.status(404).send(JSON.stringify({ status: 'Challenge not found' }));
         } else {
             res.send(data.data());
         }
@@ -146,5 +164,6 @@ const getChallengesByFilter = async (req, res, next) => {
 module.exports = {
     getChallenges,
     getChallengesByFilter,
-    getChallenge
+    getChallenge,
+    postChallenge
 }

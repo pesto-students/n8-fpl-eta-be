@@ -15,7 +15,7 @@
      - calculate portfolio base price 
      - setup onClose cron job
 
- - TODO BSE api to convert alphavantate code to BSE symbol ID 
+ - TODO BSE api to convert alphavantate code to BSE symbol ID  
 
  - TODO Leaderboard API 
     - setup websocket on `/Leaderboard` route; check status (if the challenge is live) 
