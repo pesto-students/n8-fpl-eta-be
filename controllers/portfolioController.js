@@ -29,7 +29,10 @@ const getPortfolio = async (req, res, next) => {
 const postPortfolio = async (req, res, next) => {
     try {
         const data = req.body;
-        await db.collection('portfolios').doc().set(data);
+        
+        const ts = admin.firestore.Timestamp.fromDate(new Date(data.submittedAt));
+        const _p = {...data, submitTimestamp:ts};
+        await db.collection('portfolios').doc().set(_p);
         res.status(200).send(JSON.stringify({ status: `Portfolio Saved Successfully` }));
     } catch (error) {
         res.status(400).send(error.message);

@@ -1,22 +1,32 @@
 'use strict';
 
 // unique id generator
-const { v4 : uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 
 // firebase setup to access firestore
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
-
-
 const Challenge = require('../models/challenge');
 
 const postChallenge = async (req, res, next) => {
     try {
         const data = req.body;
-        const _c = {...data, status:'NOT_LIVE'};
+
+        // converting timestamp from string to firestore.Timestamp
+        // 01 Jan 1970 00:00:00 GMT
+        const sDate = new Date(data.startDate);
+        const eDate = new Date(data.endDate);
+        const eDate_timestamp = admin.firestore.Timestamp.fromDate(sDate);
+        const sDate_timestamp = admin.firestore.Timestamp.fromDate(eDate);
+
+        // id for the challenge obj
         const id = uuidv4();
+
+        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp };
         await db.collection('challenges').doc(id).set(_c);
+
         // onStart cron job
+
         res.status(200).send(JSON.stringify({ status: `challenge created successfully` }));
     } catch (error) {
         res.status(400).send(error.message);
