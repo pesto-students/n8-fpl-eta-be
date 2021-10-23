@@ -1,15 +1,49 @@
 'use strict';
 
+// unique id generator
+const { v4: uuidv4 } = require('uuid');
+
+// job scheduler
+const schedule = require('node-schedule');
+
+const onStart = require('../jobs/onStart');
+
+// firebase setup to access firestore
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
 const Challenge = require('../models/challenge');
 
+const postChallenge = async (req, res, next) => {
+    try {
+        const data = req.body;
+
+        // converting timestamp from string to firestore.Timestamp
+        // 01 Jan 1970 00:00:00 GMT
+        const sDate = new Date(data.startDate);
+        const eDate = new Date(data.endDate);
+        const eDate_timestamp = admin.firestore.Timestamp.fromDate(eDate);
+        const sDate_timestamp = admin.firestore.Timestamp.fromDate(sDate);
+
+        // id for the challenge obj
+        const id = uuidv4();
+
+        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp };
+        await db.collection('challenges').doc(id).set(_c);
+
+        // onStart cron job
+        const scheduleDate = new Date(data.startDate);
+
+        // schedule onStart 
+        schedule.scheduleJob(scheduleDate, function(id){ onStart(id) }.bind(null,id));
+        res.status(200).send(JSON.stringify({ status: 'Challenge created successfully' }));
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
 const getChallenges = async (req, res, next) => {
     try {
-
-        console.log(`GetChallenges Controller`);
-
         const challenges = await db.collection('challenges');
         const data = await challenges.get();
         const challengesArray = [];
@@ -40,7 +74,7 @@ const getChallenge = async (req, res, next) => {
         const challenge = await db.collection('challenges').doc(id);
         const data = await challenge.get();
         if (!data.exists) {
-            res.status(404).send(JSON.stringify({status:'Challenge not found'}));
+            res.status(404).send(JSON.stringify({ status: 'Challenge not found' }));
         } else {
             res.send(data.data());
         }
@@ -148,5 +182,6 @@ const getChallengesByFilter = async (req, res, next) => {
 module.exports = {
     getChallenges,
     getChallengesByFilter,
-    getChallenge
+    getChallenge,
+    postChallenge
 }
