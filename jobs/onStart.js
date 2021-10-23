@@ -4,10 +4,15 @@
 // 4. set base price for all the portfolios 
 // 5. update status to 'LIVE'
 
+// firebase setup to access firestore
+const admin = require('../firebase').firebaseAdmin;
+const db = admin.firestore();
+
+
 const Portfolio = require('../models/portfolio');
 
 // crud functions
-const getChallenge = (challengeId) => {
+const getChallenge = async (challengeId) => {
     try {
         const challenge = await db.collection('challenges').doc(challengeId);
         const data = await challenge.get();
@@ -21,7 +26,7 @@ const getChallenge = (challengeId) => {
     }
 }
 
-const updateChallenge = (id, data) => {
+const updateChallenge = async (id, data) => {
     try {
         const challenge = await db.collection('challenges').doc(id);
         await challenge.update(data);
@@ -32,7 +37,7 @@ const updateChallenge = (id, data) => {
     }
 }
 
-const getPortfolios = (challengeId) => {
+const getPortfolios = async (id) => {
     const portfolioRef = db.collection('portfolios');
     const portfolioArray = [];
     let snapshot = null;
@@ -72,7 +77,7 @@ const isStockPresent = (stock, stockArr) => {
     return isPresent;
 }
 
-const onStart = (challengeId) => {
+async function onStart(challengeId) {
 
     let stocks = [];
     let _c = await getChallenge(challengeId);
@@ -82,17 +87,18 @@ const onStart = (challengeId) => {
         let p = 0;
         while (p < portfolios.length) {
             const portfolio = portfolios[p];
-             portfolio.map(stock => {
-                    if(!isStockPresent(stock, stocks)){
-                        stocks.push(stock);
-                    }
-                }); 
+            portfolio.map(stock => {
+                if (!isStockPresent(stock, stocks)) {
+                    stocks.push(stock);
+                }
+            });
             p++;
         }
-        console.table(stocks);
+        _c.stocks = stocks;
+        updateChallenge(challengeId, _c);
     } else {
         return 'error';
     }
-};
+}
 
-export default onStart;
+module.exports = onStart;
