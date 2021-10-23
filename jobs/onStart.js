@@ -8,6 +8,9 @@
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
+// alphavantage to fetch pervious day closing price
+const alphavantage = require('alphavantage')
+
 
 const Portfolio = require('../models/portfolio');
 
@@ -79,7 +82,12 @@ const isStockPresent = (stock, stockArr) => {
 
 async function onStart(challengeId) {
 
+    // setup alphavantage 
+    const av = alphavantage({ key: process.env.ALPHAVANTAGE_API_KEY })
+
+    // stocks list for each challenge
     let stocks = [];
+
     let _c = await getChallenge(challengeId);
     _c.status = 'GETTING_READY';
     if (updateChallenge(challengeId, _c)) {
@@ -87,13 +95,20 @@ async function onStart(challengeId) {
         let p = 0;
         while (p < portfolios.length) {
             const portfolio = portfolios[p];
+
             portfolio.map(stock => {
                 if (!isStockPresent(stock, stocks)) {
-                    stocks.push(stock);
+                    // fetch the price and store with the stock
+                    alpha.data.daily(stock, 'compact', 'json', '1')
+                        .then(data => {
+                            console.log(`price fetch ${JSON.stringify(data,0,2)}`)
+                            stocks.push(stock);
+                        })
                 }
             });
             p++;
         }
+
         _c.stocks = stocks;
         updateChallenge(challengeId, _c);
     } else {

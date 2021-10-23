@@ -4,7 +4,7 @@
     get  portfolioByUserID
     get  portfolioByChallengeID
 
- - TODO create challenge api node cron job
+ - create challenge api node cron job
      - create challenge details 
      - schedule cron job as per startDate 
 
