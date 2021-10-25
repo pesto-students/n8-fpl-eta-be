@@ -13,10 +13,11 @@ const {
     PROJECT_ID,
     STORAGE_BUCKET,
     MESSAGING_SENDER_ID,
-    APP_ID
+    APP_ID,
+    ALPHAVANTAGE_API_KEY
 } = process.env;
 
-assert(PORT, 'PORT is required');
+// assert(PORT, 'PORT is required');
 // assert(HOST, 'HOST is required');
 
 module.exports = {
@@ -30,5 +31,6 @@ module.exports = {
         storageBucket: STORAGE_BUCKET,
         messagingSenderId: MESSAGING_SENDER_ID,
         appId: APP_ID
-    }
+    },
+    alphavantageApiKey : ALPHAVANTAGE_API_KEY
 }

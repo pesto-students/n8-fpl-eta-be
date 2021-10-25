@@ -8,9 +8,11 @@
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
+const config = require('../config');
+// config file to get the key
+
 // alphavantage to fetch pervious day closing price
 const alphavantage = require('alphavantage')
-
 
 const Portfolio = require('../models/portfolio');
 
@@ -67,11 +69,11 @@ const getPortfolios = async (id) => {
     };
 }
 
-const isStockPresent = (stock, stockArr) => {
+const isStockPresent = (stock) => {
     isPresent = false;
     let s = 0;
-    while (s < stockArr.length) {
-        if (stockArr[0] === stock) {
+    while (s < uniqueStocks.length) {
+        if (uniqueStocks[s].stock === stock) {
             isPresent = true;
             break;
         }
@@ -80,36 +82,71 @@ const isStockPresent = (stock, stockArr) => {
     return isPresent;
 }
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+// stocks list for each challenge
+let uniqueStocks = [];
+
 async function onStart(challengeId) {
 
-    // setup alphavantage 
-    const av = alphavantage({ key: process.env.ALPHAVANTAGE_API_KEY })
-
-    // stocks list for each challenge
-    let stocks = [];
+    const av = alphavantage({ key: config.alphavantageApiKey });
 
     let _c = await getChallenge(challengeId);
     _c.status = 'GETTING_READY';
     if (updateChallenge(challengeId, _c)) {
-        const portfolios = getPortfolios(challengeId);
-        let p = 0;
+        const portfolios = await getPortfolios(challengeId);
+        let p = 0; l = 0, apiCounter = 0;
+
+        // latest date for closing value
+        const date = new Date();
+        if (date.getDay() === 1) { // monday
+            date.setDate(date.getDate() - 3); // 2 days prior 
+        } else {
+            date.setDate(date.getDate() - 1); // one day prior
+        }
+        // formating date as per api syntax
+        const ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(date);
+        const mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(date);
+        const da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(date);
+
         while (p < portfolios.length) {
+
             const portfolio = portfolios[p];
 
-            portfolio.map(stock => {
-                if (!isStockPresent(stock, stocks)) {
-                    // fetch the price and store with the stock
-                    alpha.data.daily(stock, 'compact', 'json', '1')
+            const pStocks = portfolio.stocks;
+
+            for (let s = 0; s < pStocks.length; s++) {
+                if (!isStockPresent(pStocks[s], uniqueStocks)) {
+
+                    console.log(`Fetching stock - ${pStocks[s]}`);
+
+                    let stockPrice = await av.data.daily(pStocks[s], 'compact', 'json', '1')
                         .then(data => {
-                            console.log(`price fetch ${JSON.stringify(data,0,2)}`)
-                            stocks.push(stock);
-                        })
+                            apiCounter++;
+                            return ({
+                                stock: pStocks[s],
+                                price: data["Time Series (Daily)"][`${ye}-${mo}-${da}`]["4. close"]
+                            });
+                        },
+                            error => {
+                                apiCounter++;
+                                console.log(`API call error `, error);
+                            });
+
+                    uniqueStocks.push(stockPrice);
+                    console.log(`Added stock Price ${JSON.stringify(stockPrice, 0, 2)}\n`);
+
+                    if (apiCounter === 5) {
+                        console.log(`waiting for 60 secs`)
+                        await delay(60000);
+                        apiCounter = 0;
+                        console.log(`Wait Complete\n`);
+                    }
                 }
-            });
+            }
             p++;
         }
-
-        _c.stocks = stocks;
+        _c.stocks = uniqueStocks;
         updateChallenge(challengeId, _c);
     } else {
         return 'error';

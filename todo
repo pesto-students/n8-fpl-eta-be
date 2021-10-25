@@ -8,12 +8,12 @@
      - create challenge details 
      - schedule cron job as per startDate 
 
- - TODO challenge onStart cron job  
+ -  challenge onStart cron job  
      - update challenge state 
      - build stock list 
      - calculate and set awards 
      - calculate portfolio base price 
-     - setup onClose cron job
+   TODO  - setup onClose cron job
 
  - TODO BSE api to convert alphavantate code to BSE symbol ID  
 
