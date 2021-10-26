@@ -173,7 +173,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
             if (!isNaN(_s)) {
                 getBSESymbol(_s)
                     .then(symbol => {
-                        console.log(`subscribing to Symbol - ${symbol[0].securityId}\n\n`)
                         ws.send(JSON.stringify({
                             subscribe: `${symbol[0].securityId}.BO`
                         }));
@@ -184,7 +183,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
         for (let a = 0; a < aVsymbols.length; a++) {
             const _s = aVsymbols[a];
             if (isNaN(_s)) {
-                console.log(`subscribing to Symbol - ${_s}\n\n`)
                 ws.send(JSON.stringify({
                     subscribe: `${_s}.BO`
                 }));
