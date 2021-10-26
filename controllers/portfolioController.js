@@ -62,6 +62,7 @@ const getPortfolios = async (req, res, next) => {
                     const portfolio = new Portfolio(
                         doc.id,
                         doc.data().userId,
+                        doc.data().username,
                         doc.data().challengeId,
                         doc.data().stocks,
                         doc.data().submitTimestamp,
@@ -85,6 +86,7 @@ const getPortfolios = async (req, res, next) => {
                         const portfolio = new Portfolio(
                             doc.id,
                             doc.data().userId,
+                            doc.data().username,
                             doc.data().challengeId,
                             doc.data().stocks,
                             doc.data().submitTimestamp,

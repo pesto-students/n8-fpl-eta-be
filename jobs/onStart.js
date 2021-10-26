@@ -8,6 +8,7 @@
 // firebase setup to access firestore
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
+const realTimeDb = admin.database();
 
 const config = require('../config');
 
@@ -72,6 +73,7 @@ const getPortfolios = async (id) => {
             const portfolio = new Portfolio(
                 doc.id,
                 doc.data().userId,
+                doc.data().username,
                 doc.data().challengeId,
                 doc.data().stocks,
                 doc.data().submitTimestamp,
@@ -123,23 +125,6 @@ const getBSESymbol = async (securityCode) => {
     }
 }
 
-
-const getYahooSymbols = async (bseSymbols) => {
-    const yahoSymbols = await bseSymbols.map(sym => {
-        return (getBSESymbol(sym).then(
-            data => {
-                y = data[0].securityId + '.BO';
-                return y;
-            },
-            error => {
-                console.error(error);
-                return null;
-            }))
-    });
-    return yahoSymbols;
-};
-
-
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
@@ -158,8 +143,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     const stockTicker = root.lookupType("yaticker");
     ws = new WebSocket('wss://streamer.finance.yahoo.com');
 
-    // 2.
-    const realTimeDb = admin.database();
 
     // 3.
     const uid = uuidv4();
@@ -188,13 +171,49 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
                 }));
             }
         }
+
+
+        let leaderboard = [];
+
+        for (let p = 0; p < portfolios.length; p++) {
+
+            const l = {
+                avgReturn: 0,
+                rank: 0,
+                changeInPosition: 0,
+                portfolioId: portfolios[p].id,
+                username: portfolios[p].username,
+                submitTimestamp: portfolios[p].submitTimestamp
+            }
+            leaderboard.push(l);
+        }
+
+        // 6.
+        saveToRTDb(uid, leaderboard);
+
+        // 7.
+        getChallenge(challengeId)
+            .then(data =>{
+                let _c = data;
+                _c.status = 'LIVE';
+                _c.leaderboard = uid;
+                updateChallenge(challengeId, _c)        
+            });
     }
 
     // 5.
     ws.onmessage = function incoming(data) {
-        console.log(stockTicker.decode(new Buffer(data.data, 'base64')))
+        const ticker = stockTicker.decode(new Buffer(data.data, 'base64'));
+        updateLeaderboard(ticker);
     };
 }
+
+const saveToRTDb = (id, l) => {
+    const ref = realTimeDb.ref('Leaderboard');
+    const leaderboardRef = ref.child(id);
+    leaderboardRef.set({ l });
+}
+
 
 async function onStart(challengeId) {
 
