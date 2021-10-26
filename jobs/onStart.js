@@ -2,6 +2,7 @@
 // 2. get stock list for the challenge 
 // 3. set base price for all the stocks 
 // 4. set base price for all the portfolios 
+// 5. start leaderboard calculation
 // 5. update status to 'LIVE'
 
 // firebase setup to access firestore
@@ -9,14 +10,15 @@ const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
 
 const config = require('../config');
-// config file to get the key
 
 // alphavantage to fetch pervious day closing price
 const alphavantage = require('alphavantage')
 
+// stocks list for each challenge
+let uniqueStocks = [];
+
 const Portfolio = require('../models/portfolio');
 
-// crud functions
 const getChallenge = async (challengeId) => {
     try {
         const challenge = await db.collection('challenges').doc(challengeId);
@@ -84,8 +86,15 @@ const isStockPresent = (stock) => {
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// stocks list for each challenge
-let uniqueStocks = [];
+const calculateLeaderboard = (challenge, portfolios, stockList) =>{
+
+    // initiate ws with Yahoo finance
+    // initialize firebase database for realtime
+    // generate unique id for the leaderboard 
+    // update challenge with unique id
+    // on message calculate the leaderboard 
+    // update realtime firebase with leaderboard with unique id
+}
 
 async function onStart(challengeId) {
 
