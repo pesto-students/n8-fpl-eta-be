@@ -1,8 +1,10 @@
 'use strict';
 const dotenv = require('dotenv');
 const assert = require('assert');
+const path = require('path');
+dotenv.config({path:path.resolve(__dirname,"./.env")});
 
-dotenv.config();
+console.log(`${path.resolve(__dirname,"./.env")}`);
 
 const {
     PORT,
@@ -32,5 +34,5 @@ module.exports = {
         messagingSenderId: MESSAGING_SENDER_ID,
         appId: APP_ID
     },
-    alphavantageApiKey : ALPHAVANTAGE_API_KEY
+    alphavantageApiKey: ALPHAVANTAGE_API_KEY
 }

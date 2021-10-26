@@ -14,10 +14,21 @@ const config = require('../config');
 // alphavantage to fetch pervious day closing price
 const alphavantage = require('alphavantage')
 
+// unique id generator 
+const { v4: uuidv4 } = require('uuid');
+
+
+// Websocket and decoder
+const protobuf = require("protobufjs");
+const WebSocket = require('ws')
+
 // stocks list for each challenge
 let uniqueStocks = [];
 
+
 const Portfolio = require('../models/portfolio');
+const StockLookup = require('../models/stockLookup');
+
 
 const getChallenge = async (challengeId) => {
     try {
@@ -84,16 +95,107 @@ const isStockPresent = (stock) => {
     return isPresent;
 }
 
+const getBSESymbol = async (securityCode) => {
+
+    try {
+        const code = securityCode;
+        const stockLookupRef = db.collection('lookup');
+        const stockLookupArray = [];
+        let snapshot = null;
+
+        snapshot = await stockLookupRef.where('securityCode', '==', parseInt(code)).orderBy('securityName', 'asc').get();
+        if (snapshot.empty) {
+            try {
+                return (`{"status": "No records found"}`);
+            } catch (error) {
+                return (`{"status": "FAIL", "message":${error}}`);
+            }
+        } else {
+            snapshot.forEach(doc => {
+                const { id, securityId, securityCode, securityName } = doc.data();
+                const stockLookup = new StockLookup(id, securityCode, securityId, securityName);
+                stockLookupArray.push(stockLookup);
+            });
+            return (stockLookupArray);
+        };
+    } catch (error) {
+        return (error.message);
+    }
+}
+
+
+const getYahooSymbols = async (bseSymbols) => {
+    const yahoSymbols = await bseSymbols.map(sym => {
+        return (getBSESymbol(sym).then(
+            data => {
+                y = data[0].securityId + '.BO';
+                return y;
+            },
+            error => {
+                console.error(error);
+                return null;
+            }))
+    });
+    return yahoSymbols;
+};
+
+
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-const calculateLeaderboard = (challenge, portfolios, stockList) =>{
+const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
 
-    // initiate ws with Yahoo finance
-    // initialize firebase database for realtime
-    // generate unique id for the leaderboard 
-    // update challenge with unique id
-    // on message calculate the leaderboard 
-    // update realtime firebase with leaderboard with unique id
+    // STEPS
+    // 1. initiate ws with Yahoo finance
+    // 2. initialize firebase database for realtime
+    // 3. generate unique id for the leaderboard 
+    // 4. build yahoo symbol list.
+    // 5. on message calculate the leaderboard
+    // 6. update challenge with unique id
+    // 7. update realtime firebase with leaderboard with unique id
+
+    // 1.
+    const root = protobuf.loadSync(__dirname + '/YPricingData.proto');
+    const stockTicker = root.lookupType("yaticker");
+    ws = new WebSocket('wss://streamer.finance.yahoo.com');
+
+    // 2.
+    const realTimeDb = admin.database();
+
+    // 3.
+    const uid = uuidv4();
+
+    // 4. To be tested till market opening
+    ws.onopen = () => {
+        console.log(`Connected to yahoo for challenge id ${challengeId}`)
+        const aVsymbols = stockList.map(s => { return s.stock });
+        aVsymbols.map(sym => {
+            const _s = sym;
+            if (!isNaN(_s)) {
+                getBSESymbol(_s)
+                    .then(symbol => {
+                        console.log(`subscribing to Symbol - ${symbol[0].securityId}\n\n`)
+                        ws.send(JSON.stringify({
+                            subscribe: `${symbol[0].securityId}.BO`
+                        }));
+                    })
+            }
+        });
+
+        for (let a = 0; a < aVsymbols.length; a++) {
+            const _s = aVsymbols[a];
+            if (isNaN(_s)) {
+                console.log(`subscribing to Symbol - ${_s}\n\n`)
+                ws.send(JSON.stringify({
+                    subscribe: `${_s}.BO`
+                }));
+            }
+        }
+    }
+
+    // 5.
+    ws.onmessage = function incoming(data) {
+        console.log(stockTicker.decode(new Buffer(data.data, 'base64')))
+    };
 }
 
 async function onStart(challengeId) {
@@ -125,7 +227,7 @@ async function onStart(challengeId) {
             const pStocks = portfolio.stocks;
 
             for (let s = 0; s < pStocks.length; s++) {
-                if (!isStockPresent(pStocks[s], uniqueStocks)) {
+                if (!isStockPresent(pStocks[s].split('.')[0], uniqueStocks)) {
 
                     console.log(`Fetching stock - ${pStocks[s]}`);
 
@@ -133,7 +235,7 @@ async function onStart(challengeId) {
                         .then(data => {
                             apiCounter++;
                             return ({
-                                stock: pStocks[s],
+                                stock: pStocks[s].split(".")[0],
                                 price: data["Time Series (Daily)"][`${ye}-${mo}-${da}`]["4. close"]
                             });
                         },
@@ -157,6 +259,7 @@ async function onStart(challengeId) {
         }
         _c.stocks = uniqueStocks;
         updateChallenge(challengeId, _c);
+        calculateLeaderboard(challengeId, portfolios, uniqueStocks);
     } else {
         return 'error';
     }
