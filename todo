@@ -11,11 +11,11 @@
  -  challenge onStart cron job  
      - update challenge state 
      - build stock list 
-     - calculate and set awards 
+   TODO  - calculate and set awards 
      - calculate portfolio base price 
    TODO  - setup onClose cron job
 
- - TODO BSE api to convert alphavantate code to BSE symbol ID  
+ - BSE api to convert alphavantate code to BSE symbol ID  
 
  - TODO Leaderboard API 
     - setup websocket on `/Leaderboard` route; check status (if the challenge is live) 
