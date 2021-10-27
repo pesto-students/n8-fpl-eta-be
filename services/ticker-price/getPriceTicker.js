@@ -20,5 +20,6 @@ ws.onclose = function close() {
 
 ws.onmessage = function incoming(data) {
   console.log('comming message')
-  console.log(Yaticker.decode(new Buffer(data.data, 'base64')))
+  const ticker = Yaticker.decode(new Buffer(data.data, 'base64')); 
+  console.log(ticker.id.split('.')[0])
 };
