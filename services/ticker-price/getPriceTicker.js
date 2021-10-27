@@ -10,7 +10,7 @@ const ws = new WebSocket('wss://streamer.finance.yahoo.com');
 ws.onopen = function open() {
   console.log('connected');
   ws.send(JSON.stringify({
-    subscribe: ['MSFT']
+    subscribe: ['TCS.BO']
   }));
 };
 

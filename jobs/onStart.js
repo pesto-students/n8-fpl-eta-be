@@ -84,16 +84,18 @@ const getPortfolios = async (id) => {
     };
 }
 
+const avStockList = [];
 const isStockPresent = (stock) => {
     isPresent = false;
     let s = 0;
     while (s < uniqueStocks.length) {
-        if (uniqueStocks[s].stock === stock) {
+        if (avStockList[s] === stock) {
             isPresent = true;
             break;
-        }
+        } 
         s++;
     }
+    
     return isPresent;
 }
 
@@ -150,28 +152,14 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     // 4. To be tested till market opening
     ws.onopen = () => {
         console.log(`Connected to yahoo for challenge id ${challengeId}`)
-        const aVsymbols = stockList.map(s => { return s.stock });
-        aVsymbols.map(sym => {
-            const _s = sym;
-            if (!isNaN(_s)) {
-                getBSESymbol(_s)
-                    .then(symbol => {
-                        ws.send(JSON.stringify({
-                            subscribe: `${symbol[0].securityId}.BO`
-                        }));
-                    })
-            }
+        const symbols = stockList.map(s => { return s.stock });
+        symbols.map(sym => {
+            const sendMessage = JSON.stringify({
+                subscribe: [`${sym}.BO`]
+            });
+            console.log(`Subscribing to ${sendMessage}`)
+            ws.send(sendMessage);
         });
-
-        for (let a = 0; a < aVsymbols.length; a++) {
-            const _s = aVsymbols[a];
-            if (isNaN(_s)) {
-                ws.send(JSON.stringify({
-                    subscribe: `${_s}.BO`
-                }));
-            }
-        }
-
 
         let leaderboard = [];
 
@@ -193,18 +181,41 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
 
         // 7.
         getChallenge(challengeId)
-            .then(data =>{
+            .then(data => {
                 let _c = data;
                 _c.status = 'LIVE';
                 _c.leaderboard = uid;
-                updateChallenge(challengeId, _c)        
+                updateChallenge(challengeId, _c)
             });
     }
 
     // 5.
     ws.onmessage = function incoming(data) {
+        console.log(`Reciving Ticker`);
         const ticker = stockTicker.decode(new Buffer(data.data, 'base64'));
-        updateLeaderboard(ticker);
+        console.log(`${ticker.id} - ${ticker.price} - ${ticker.change}`);
+
+        for (let p = 0; p < portfolios.length; p++) {
+            let maxDiff = 0, minDiff = 9999999999, returnTotal = 0;
+            for (let s = 0; s < portfolios[p].stocks; s++) {
+            }
+            const l = {
+                avgReturn: 0,
+                rank: 0,
+                changeInPosition: 0,
+                portfolioId: portfolios[p].id,
+                username: portfolios[p].username,
+                submitTimestamp: portfolios[p].submitTimestamp
+            }
+            leaderboard.push(l);
+        }
+
+        // cal diff for each portfolio 
+        // cal return
+        // sort array by return 
+        // get leaderboard
+        // cal change in position
+        // update leaderboard
     };
 }
 
@@ -244,17 +255,27 @@ async function onStart(challengeId) {
             const pStocks = portfolio.stocks;
 
             for (let s = 0; s < pStocks.length; s++) {
-                if (!isStockPresent(pStocks[s].split('.')[0], uniqueStocks)) {
-
+                if (!isStockPresent(pStocks[s])) {
+                    avStockList.push(pStocks[s]);
                     console.log(`Fetching stock - ${pStocks[s]}`);
 
                     let stockPrice = await av.data.daily(pStocks[s], 'compact', 'json', '1')
                         .then(data => {
                             apiCounter++;
-                            return ({
-                                stock: pStocks[s].split(".")[0],
-                                price: data["Time Series (Daily)"][`${ye}-${mo}-${da}`]["4. close"]
-                            });
+                            if (isNaN(pStocks[s].split(".")[0])) {
+                                return ({
+                                    stock: pStocks[s].split(".")[0],
+                                    price: data["Time Series (Daily)"][`${ye}-${mo}-${da}`]["4. close"]
+                                });
+                            } else {
+                                return getBSESymbol(pStocks[s].split(".")[0])
+                                    .then(symbol => {
+                                        return ({
+                                            stock: symbol[0].securityId,
+                                            price: data["Time Series (Daily)"][`${ye}-${mo}-${da}`]["4. close"]
+                                        });
+                                    })
+                            }
                         },
                             error => {
                                 apiCounter++;

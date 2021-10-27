@@ -28,7 +28,7 @@ const postChallenge = async (req, res, next) => {
         // id for the challenge obj
         const id = uuidv4();
 
-        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp };
+        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp , leaderboard : '' };
         await db.collection('challenges').doc(id).set(_c);
 
         // onStart cron job
@@ -58,6 +58,7 @@ const getChallenges = async (req, res, next) => {
                     doc.data().endDate,
                     doc.data().rules,
                     doc.data().status,
+                    doc.data().leaderboard
                 );
                 challengesArray.push(challenge);
             });
@@ -112,7 +113,7 @@ const getChallengesByFilter = async (req, res, next) => {
                             doc.data().endDate,
                             doc.data().rules,
                             doc.data().status,
-
+                            doc.data().leaderboard,
                         );
                         challengeArray.push(challenge);
                     });
