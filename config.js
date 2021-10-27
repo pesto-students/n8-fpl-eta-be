@@ -19,7 +19,7 @@ const {
     ALPHAVANTAGE_API_KEY
 } = process.env;
 
-// assert(PORT, 'PORT is required');
+assert(PORT, 'PORT is required');
 // assert(HOST, 'HOST is required');
 
 module.exports = {
