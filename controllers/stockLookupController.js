@@ -3,7 +3,7 @@ const db = admin.firestore();
 
 const StockLookup = require('../models/stockLookup');
 
-const getStockById = async (req, res, next) => {
+const getStockByCode = async (req, res, next) => {
     try {
         const code = req.params.securityCode;
         const stockLookupRef = db.collection('lookup');
@@ -30,14 +30,14 @@ const getStockById = async (req, res, next) => {
     }
 };
 
-const getStockByName = async (req, res, next) => {
+const getStockById = async (req, res, next) => {
     try {
-        const name = req.params.name;
+        const securityId = req.params.securityId;
         const stockLookupRef = db.collection('lookup');
         const stockLookupArray = [];
         let snapshot = null;
 
-        snapshot = await stockLookupRef.where('securityName', '==', name).get();
+        snapshot = await stockLookupRef.where('securityId', '==', securityId).get();
         if (snapshot.empty) {
             try {
                 res.status(200).send(`{"status": "No records found"}`);
@@ -58,6 +58,6 @@ const getStockByName = async (req, res, next) => {
 };
 
 module.exports = {
-    getStockById,
-    getStockByName
+    getStockByCode,
+    getStockById
 }
