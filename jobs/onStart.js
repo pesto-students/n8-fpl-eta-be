@@ -44,7 +44,6 @@ const getChallenge = async (challengeId) => {
         console.error('challenge error', error);
     }
 }
-
 const updateChallenge = async (id, data) => {
     try {
         const challenge = await db.collection('challenges').doc(id);
@@ -55,7 +54,6 @@ const updateChallenge = async (id, data) => {
         return false;
     }
 }
-
 const getPortfolios = async (id) => {
     const portfolioRef = db.collection('portfolios');
     const portfolioArray = [];
@@ -83,7 +81,6 @@ const getPortfolios = async (id) => {
         return (portfolioArray);
     };
 }
-
 const avStockList = [];
 const isStockPresent = (stock) => {
     isPresent = false;
@@ -92,13 +89,12 @@ const isStockPresent = (stock) => {
         if (avStockList[s] === stock) {
             isPresent = true;
             break;
-        } 
+        }
         s++;
     }
-    
+
     return isPresent;
 }
-
 const getBSESymbol = async (securityCode) => {
 
     try {
@@ -127,8 +123,36 @@ const getBSESymbol = async (securityCode) => {
     }
 }
 
+const saveToRTDb = async (id, l, reference) => {
+    const ref = realTimeDb.ref(reference);
+    const objRef = ref.child(id);
+    await objRef.set({ l }, (a) => { if (a !== null) console.log(a) });
+}
+
+const readfromRTDb = (id, object) => {
+    const oRef = realTimeDb.ref(`${object}/${id}`);
+    oRef.on('value', (snapshot) => {
+        console.log(snapshot.val());
+        return snapshot.val();
+    }, (errorObject) => {
+        console.log('The read failed: ' + errorObject.name);
+    });
+}
+
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+const sym = (s) => {
+    return new Promise((resolve, reject) => {
+        resolve(getBSESymbol(s)
+            .then(symbol => {
+                return (symbol[0].securityId)
+            }));
+    });
+
+};
+
+
+let portfolioByStocks = [];
 const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
 
     // STEPS
@@ -152,6 +176,21 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     // 4. To be tested till market opening
     ws.onopen = () => {
         console.log(`Connected to yahoo for challenge id ${challengeId}`)
+        // make portfolio by stocks list 
+
+        for (let sl = 0; sl < stockList.length; sl++) {
+            const _p = [];
+            for (let p = 0; p < portfolios.length; p++) {
+                const pStocks = portfolios[p].stocks;
+                for (s = 0; s < pStocks.length; s++) {
+                    if (pStocks[s] === stockList[sl].stock) {
+                        _p.push({ portfolioId: portfolios[p].id, stocks: portfolios[p].stocks });
+                    }
+                }
+            }
+            portfolioByStocks.push({ stock: stockList[sl].stock, portfolios: _p });
+        }
+        // subscribing to all symbols in challenge
         const symbols = stockList.map(s => { return s.stock });
         symbols.map(sym => {
             const sendMessage = JSON.stringify({
@@ -164,20 +203,52 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
         let leaderboard = [];
 
         for (let p = 0; p < portfolios.length; p++) {
+            let baseP = [];
+            const pStocks = portfolios[p].stocks;
+
+            //save base portfolios 
+
+            pStocks.map(pS => {
+                const symbol = pS.split(".")[0];
+                stockList.map(async (sl) => {
+                    if (isNaN(symbol)) {
+                        console.log(`Comparing ${symbol} and ${sl.stock}`)
+                        if (symbol === sl.stock) {
+                            console.log(JSON.stringify(sl, 0, 2))
+                            baseP.push(sl);
+                            console.table(baseP);
+                            saveToRTDb(portfolios[p].id, baseP, 'FPL/Portfolios');
+
+                        }
+                    } else {
+                        const bSymbol = await getBSESymbol(symbol);
+                        console.log(`Comparing ${bSymbol[0].securityId} and ${sl.stock}`)
+                        if (bSymbol[0].securityId === sl.stock) {
+                            console.log(JSON.stringify(sl, 0, 2))
+                            baseP.push(sl);
+                            console.table(baseP);
+                            saveToRTDb(portfolios[p].id, baseP, 'FPL/Portfolios');
+                        }
+                    }
+                })
+            })
 
             const l = {
                 avgReturn: 0,
-                rank: 0,
-                changeInPosition: 0,
+                minReturnStock: '',
+                minReturn: 00,
+                maxReturnStock: '',
+                maxReturn: 00,
                 portfolioId: portfolios[p].id,
                 username: portfolios[p].username,
                 submitTimestamp: portfolios[p].submitTimestamp
             }
+
             leaderboard.push(l);
         }
 
         // 6.
-        saveToRTDb(uid, leaderboard);
+        saveToRTDb(uid, leaderboard, 'FPL/Leaderboard');
 
         // 7.
         getChallenge(challengeId)
@@ -191,40 +262,34 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
 
     // 5.
     ws.onmessage = function incoming(data) {
-        console.log(`Reciving Ticker`);
         const ticker = stockTicker.decode(new Buffer(data.data, 'base64'));
         console.log(`${ticker.id} - ${ticker.price} - ${ticker.change}`);
 
-        for (let p = 0; p < portfolios.length; p++) {
-            let maxDiff = 0, minDiff = 9999999999, returnTotal = 0;
-            for (let s = 0; s < portfolios[p].stocks; s++) {
-            }
-            const l = {
-                avgReturn: 0,
-                rank: 0,
-                changeInPosition: 0,
-                portfolioId: portfolios[p].id,
-                username: portfolios[p].username,
-                submitTimestamp: portfolios[p].submitTimestamp
-            }
-            leaderboard.push(l);
-        }
+        for (let p = 0; p < portfolioByStocks.length; p++) {
+            if (ticker.id === portfolioByStocks[p].stock) {
+                const portfolios = portfolioByStocks[p].portfolios;
+                for (let pper = 0; pper < portfolios.length; pper++) {
 
-        // cal diff for each portfolio 
-        // cal return
-        // sort array by return 
-        // get leaderboard
-        // cal change in position
-        // update leaderboard
+                    const { portfolioId } = portfolios[pper];
+                    // fetch from rtdb
+
+                    const prevPortfolio = readfromRTDb(portfolioId, 'Portfolio');
+
+                    const currPortfolio = [];
+                    console.log(JSON.stringify(prevPortfolio));
+                    for (let pp = 0; p < prevPortfolio.length; pp++) {
+                        if (prevPortfolio[pp].stock === ticker.id) {
+                            currPortfolio.push({ stock: ticker.id, price: ticker.price });
+                        } else {
+                            currPortfolio.push(prevPortfolio[pp]);
+                        }
+                    }
+                    saveToRTDb(portfolioId, currPortfolio, 'FPL/Portfolio');
+                }
+            }
+        }
     };
 }
-
-const saveToRTDb = (id, l) => {
-    const ref = realTimeDb.ref('Leaderboard');
-    const leaderboardRef = ref.child(id);
-    leaderboardRef.set({ l });
-}
-
 
 async function onStart(challengeId) {
 
