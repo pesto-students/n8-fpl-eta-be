@@ -129,15 +129,6 @@ const saveToRTDb = async (id, l, reference) => {
     await objRef.set({ l }, (a) => { if (a !== null) console.log(a) });
 }
 
-const readfromRTDb = (id, object) => {
-    const oRef = realTimeDb.ref(`${object}/${id}`);
-    oRef.on('value', (snapshot) => {
-        return snapshot.val();
-    }, (errorObject) => {
-        console.log('The read failed: ' + errorObject.name);
-    });
-}
-
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 let portfolioByStocks = [];
@@ -164,20 +155,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     // 4. To be tested till market opening
     ws.onopen = async () => {
         console.log(`Connected to yahoo for challenge id ${challengeId}`)
-        // make portfolio by stocks list 
-
-        // for (let sl = 0; sl < stockList.length; sl++) {
-        //     const _p = [];
-        //     for (let p = 0; p < portfolios.length; p++) {
-        //         const pStocks = portfolios[p].stocks;
-        //         for (s = 0; s < pStocks.length; s++) {
-        //             if (pStocks[s].split(".")[0] === stockList[sl].stock) {
-        //                 _p.push({ portfolioId: portfolios[p].id, stocks: portfolios[p].stocks });
-        //             }
-        //         }
-        //     }
-        //     portfolioByStocks.push({ stock: stockList[sl].stock, portfolios: _p });
-        // }
 
         await stockList.map(sl => {
             const symbol = sl.stock;
@@ -270,7 +247,7 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     }
 
     // 5.
-    ws.onmessage = function incoming(data) {
+    ws.onmessage = async function incoming(data) {
         const ticker = stockTicker.decode(new Buffer(data.data, 'base64'));
         console.log(`${ticker.id} - ${ticker.price} - ${ticker.change}`);
 
@@ -278,17 +255,16 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
             if (ticker.id.split(".")[0] === portfolioByStocks[p].symbol) {
                 const portfolioId = portfolioByStocks[p].portfolioId;
                 // fetch from rtdb
-                const prevPortfolio = readfromRTDb(portfolioId, 'FPL/Portfolios');
-                const currPortfolio = [];
-                console.log(JSON.stringify(prevPortfolio));
-                // for (let pp = 0; p < prevPortfolio.length; pp++) {
-                //     if (prevPortfolio[pp].stock === ticker.id) {
-                //         currPortfolio.push({ stock: ticker.id, price: ticker.price });
-                //     } else {
-                //         currPortfolio.push(prevPortfolio[pp]);
-                //     }
-                // }
-                // saveToRTDb(portfolioId, currPortfolio, 'FPL/Portfolio');
+                const oRef = realTimeDb.ref(`FPL/Portfolios/${portfolioId}/l`);
+                oRef.once('value', (data) => {
+                    let arr = data.val();
+                    for (let s = 0; s < arr.length; s++) {
+                        if (arr[s].stock == ticker.id.split(".")[0]) {
+                            arr[s].price = ticker.price;
+                        }
+                    }
+                    oRef.update(arr)
+                })
             }
         }
     }
