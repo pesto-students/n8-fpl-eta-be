@@ -254,7 +254,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
         for (let p = 0; p < portfolioByStocks.length; p++) {
             if (ticker.id.split(".")[0] === portfolioByStocks[p].symbol) {
                 const portfolioId = portfolioByStocks[p].portfolioId;
-                // fetch from rtdb
                 const oRef = realTimeDb.ref(`FPL/Portfolios/${portfolioId}/l`);
                 oRef.once('value', (data) => {
                     let arr = data.val();
@@ -268,6 +267,27 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
             }
         }
     }
+
+    // update leaderboard
+    setInterval(() => {
+        console.log(`Updating Leaderboard - ${uid}`);
+        // get leaderboard 
+        const oRef = realTimeDb.ref(`FPL/Leaderboard/${uid}/l`);
+        oRef.once('value', (data) => {
+            let arr = data.val();
+            
+
+            for (let s = 0; s < arr.length; s++) {
+
+            }
+            oRef.update(arr)
+        })
+        // get all portfolios 
+        // calculate the leaderboard 
+        // update the leaderboard
+    }, 30 * 1000);
+
+
 }
 
 async function onStart(challengeId) {
@@ -341,6 +361,7 @@ async function onStart(challengeId) {
         }
         _c.stocks = uniqueStocks;
         updateChallenge(challengeId, _c);
+
         calculateLeaderboard(challengeId, portfolios, uniqueStocks);
     } else {
         return 'error';
