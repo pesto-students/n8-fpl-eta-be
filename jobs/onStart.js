@@ -1,10 +1,3 @@
-// 1. update status to 'GETTING_READY'
-// 2. get stock list for the challenge 
-// 3. set base price for all the stocks 
-// 4. set base price for all the portfolios 
-// 5. start leaderboard calculation
-// 5. update status to 'LIVE'
-
 // firebase setup to access firestore
 const admin = require('../firebase').firebaseAdmin;
 const db = admin.firestore();
@@ -25,7 +18,6 @@ const WebSocket = require('ws')
 
 // stocks list for each challenge
 let uniqueStocks = [];
-
 
 const Portfolio = require('../models/portfolio');
 const StockLookup = require('../models/stockLookup');
@@ -68,13 +60,20 @@ const getPortfolios = async (id) => {
         }
     } else {
         snapshot.forEach(doc => {
+
+            const { userId,
+                username,
+                challengeId,
+                stocks,
+                submitTimestamp } = doc.data();
+
             const portfolio = new Portfolio(
                 doc.id,
-                doc.data().userId,
-                doc.data().username,
-                doc.data().challengeId,
-                doc.data().stocks,
-                doc.data().submitTimestamp,
+                userId,
+                username,
+                challengeId,
+                stocks,
+                submitTimestamp
             );
             portfolioArray.push(portfolio);
         });
@@ -165,17 +164,12 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
                     if (isNaN(pS)) {
                         if (pS === symbol) {
                             portfolioByStocks.push({ symbol, portfolioId: p.id });
-                            console.log(`Portfolio by Stocks`);
-                            console.log(portfolioByStocks);
-
                         }
                     } else {
                         const bSymbol = await getBSESymbol(pS);
                         console.log(`compare ${bSymbol[0].securityId} with ${symbol}\n`);
                         if (bSymbol[0].securityId === symbol) {
                             portfolioByStocks.push({ symbol, portfolioId: p.id });
-                            console.log(`Portfolio by Stocks`);
-                            console.log(portfolioByStocks);
                         }
                     }
                 });
@@ -249,7 +243,6 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
     // 5.
     ws.onmessage = async function incoming(data) {
         const ticker = stockTicker.decode(new Buffer(data.data, 'base64'));
-        console.log(`${ticker.id} - ${ticker.price} - ${ticker.change}`);
 
         for (let p = 0; p < portfolioByStocks.length; p++) {
             if (ticker.id.split(".")[0] === portfolioByStocks[p].symbol) {
@@ -260,6 +253,8 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
                     for (let s = 0; s < arr.length; s++) {
                         if (arr[s].stock == ticker.id.split(".")[0]) {
                             arr[s].price = ticker.price;
+                            if (ticker.change !== null || ticker.change !== undefined)
+                                arr[s].change = ticker.change;
                         }
                     }
                     oRef.update(arr)
@@ -275,7 +270,7 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
         const oRef = realTimeDb.ref(`FPL/Leaderboard/${uid}/l`);
         oRef.once('value', (data) => {
             let arr = data.val();
-            
+
 
             for (let s = 0; s < arr.length; s++) {
 
