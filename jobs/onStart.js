@@ -257,12 +257,31 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
                 const oRef = realTimeDb.ref(`FPL/Portfolios/${portfolioId}/l`);
                 oRef.once('value', (data) => {
                     let arr = data.val();
+                    let avgReturn = 0; maxReturnStock = '', minReturnStock = '', maxReturn = -9999, minReturn = 9999;
+                    let totalReturn = 0;
                     for (let s = 0; s < arr.length; s++) {
                         if (arr[s].stock == ticker.id.split(".")[0]) {
                             arr[s].price = ticker.price;
                         }
+                        for (let sl = 0; sl < stockList.length; sl++) {
+                            if (stocklist[sl].stock === arr[s].stock) {
+                                const retn = ((arr[s].price - stocklist[sl].stock.price) / stocklist[sl].stock.price) / 100;
+                                totalReturn = totalReturn + retn;
+                                if (retn > maxReturn) {
+                                    maxReturn = retn;
+                                    maxReturnStock = arr[s].stock;
+                                }
+                                if (retn < minReturn) {
+                                    minReturn = retn;
+                                    minReturnStock = arr[s].stock;
+                                }
+                            }
+                        }
                     }
+                    avgReturn = totalReturn / arr.length;
+                    const performance = { avgReturn, maxReturn, maxReturnStock, minReturn, minReturnStock };
                     oRef.update(arr)
+                    oRef.update(performance)
                 })
             }
         }
@@ -275,7 +294,7 @@ const calculateLeaderboard = async (challengeId, portfolios, stockList) => {
         const oRef = realTimeDb.ref(`FPL/Leaderboard/${uid}/l`);
         oRef.once('value', (data) => {
             let arr = data.val();
-            
+
 
             for (let s = 0; s < arr.length; s++) {
 
