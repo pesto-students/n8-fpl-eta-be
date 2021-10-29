@@ -135,7 +135,7 @@ const getChallengesByFilter = async (req, res, next) => {
                             doc.id,
                             doc.data().name,
                             doc.data().startDate,
-                            doc.data().startDate,
+                            doc.data().endDate,
                             doc.data().rules,
                             doc.data().status,
 
