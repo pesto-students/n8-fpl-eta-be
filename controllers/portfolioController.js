@@ -29,9 +29,9 @@ const getPortfolio = async (req, res, next) => {
 const postPortfolio = async (req, res, next) => {
     try {
         const data = req.body;
-        
+
         const ts = admin.firestore.Timestamp.fromDate(new Date(data.submittedAt));
-        const _p = {...data, submitTimestamp:ts};
+        const _p = { ...data, submitTimestamp: ts };
         await db.collection('portfolios').doc().set(_p);
         res.status(200).send(JSON.stringify({ status: `Portfolio Saved Successfully` }));
     } catch (error) {
@@ -59,6 +59,26 @@ const getPortfolios = async (req, res, next) => {
             } else {
 
                 snapshot.forEach(doc => {
+                    const { id, userId, challengeId, stocks, submitTimestamp } = doc.data();
+                    const portfolio = new Portfolio(
+                        id, userId, challengeId, stocks, submitTimestamp
+                    );
+                    portfolioArray.push(portfolio);
+                });
+                res.send(portfolioArray);
+            };
+            break;
+        case "user":
+            snapshot = await portfolioRef.where('userId', '==', id).orderBy('submitTimestamp', 'desc').get();
+            if (snapshot.empty) {
+                try {
+                    res.status(200).send(`{"status": "No records found"}`);
+                } catch (error) {
+                    res.status(400).send(`{"status": "FAIL", "message":${error}}`);
+                }
+            } else {
+
+                snapshot.forEach(doc => {
                     const portfolio = new Portfolio(
                         doc.id,
                         doc.data().userId,
@@ -71,29 +91,6 @@ const getPortfolios = async (req, res, next) => {
                 res.send(portfolioArray);
             };
             break;
-            case "user":
-                snapshot = await portfolioRef.where('userId', '==', id).orderBy('submitTimestamp', 'desc').get();
-                if (snapshot.empty) {
-                    try {
-                        res.status(200).send(`{"status": "No records found"}`);
-                    } catch (error) {
-                        res.status(400).send(`{"status": "FAIL", "message":${error}}`);
-                    }
-                } else {
-    
-                    snapshot.forEach(doc => {
-                        const portfolio = new Portfolio(
-                            doc.id,
-                            doc.data().userId,
-                            doc.data().challengeId,
-                            doc.data().stocks,
-                            doc.data().submitTimestamp,
-                        );
-                        portfolioArray.push(portfolio);
-                    });
-                    res.send(portfolioArray);
-                };
-                break;
         default:
             res.send(JSON.stringify({ status: "Incorrect Filter" }));
     }
