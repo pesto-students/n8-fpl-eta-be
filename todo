@@ -1,0 +1,32 @@
+ - portfolio api 
+    post portfolio 
+    get  portfolio 
+    get  portfolioByUserID
+    get  portfolioByChallengeID
+
+ - create challenge api node cron job
+     - create challenge details 
+     - schedule cron job as per startDate 
+
+ - TODO challenge onStart cron job  
+     - update challenge state 
+     - build stock list 
+     - calculate and set awards 
+     - calculate portfolio base price 
+     - setup onClose cron job
+
+ - TODO BSE api to convert alphavantate code to BSE symbol ID  
+
+ - TODO Leaderboard API 
+    - setup websocket on `/Leaderboard` route; check status (if the challenge is live) 
+    - identify each connection with userID and challengeID 
+    - connect to streamer.yahoo.com
+    - subscribe with stock list from stocks list got challenge 
+    - on message calculate the leaderboard
+    - broadcast to connections filter by challengeId
+ 
+ - TODO onClose cron job
+    - calculate final winners 
+    - save the ranking with challenge object 
+
+ - TODO API documentation - https://medium.com/swlh/automatic-api-documentation-in-node-js-using-swagger-dd1ab3c78284   
