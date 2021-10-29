@@ -28,14 +28,14 @@ const postChallenge = async (req, res, next) => {
         // id for the challenge obj
         const id = uuidv4();
 
-        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp , leaderboard : '' };
+        const _c = { ...data, status: 'NOT_LIVE', startDate: sDate_timestamp, endDate: eDate_timestamp, leaderboard: '' };
         await db.collection('challenges').doc(id).set(_c);
 
         // onStart cron job
         const scheduleDate = new Date(data.startDate);
 
         // schedule onStart 
-        schedule.scheduleJob(scheduleDate, function(id){ onStart(id) }.bind(null,id));
+        schedule.scheduleJob(scheduleDate, function (id) { onStart(id) }.bind(null, id));
         res.status(200).send(JSON.stringify({ status: 'Challenge created successfully' }));
     } catch (error) {
         res.status(400).send(error.message);
@@ -51,15 +51,12 @@ const getChallenges = async (req, res, next) => {
             res.status(404).send(JSON.stringify({ status: "No records found" }));
         } else {
             data.forEach(doc => {
+
+                const { name, startDate, endDate, rules, status, leaderboard
+                } = doc.data();
+
                 const challenge = new Challenge(
-                    doc.id,
-                    doc.data().name,
-                    doc.data().startDate,
-                    doc.data().endDate,
-                    doc.data().rules,
-                    doc.data().status,
-                    doc.data().leaderboard
-                );
+                    doc.id, name, startDate, endDate, rules, status, leaderboard);
                 challengesArray.push(challenge);
             });
             res.send(challengesArray);
@@ -106,14 +103,11 @@ const getChallengesByFilter = async (req, res, next) => {
                 } else {
 
                     snapshot.forEach(doc => {
+                        const { name, startDate, endDate, rules, status, leaderboard } = doc.data();
+
                         const challenge = new Challenge(
                             doc.id,
-                            doc.data().name,
-                            doc.data().startDate,
-                            doc.data().endDate,
-                            doc.data().rules,
-                            doc.data().status,
-                            doc.data().leaderboard,
+                            name, startDate, endDate, rules, status, leaderboard
                         );
                         challengeArray.push(challenge);
                     });
@@ -131,14 +125,10 @@ const getChallengesByFilter = async (req, res, next) => {
                 } else {
 
                     snapshot.forEach(doc => {
+                        const { name, startDate, endDate, rules, status, leaderboard } = doc.data();
                         const challenge = new Challenge(
                             doc.id,
-                            doc.data().name,
-                            doc.data().startDate,
-                            doc.data().endDate,
-                            doc.data().rules,
-                            doc.data().status,
-
+                            name, startDate, endDate, rules, status, leaderboard
                         );
                         challengeArray.push(challenge);
                     });
@@ -156,14 +146,11 @@ const getChallengesByFilter = async (req, res, next) => {
                 } else {
 
                     snapshot.forEach(doc => {
+                        const { name, startDate, endDate, rules, status, leaderboard } = doc.data();
+
                         const challenge = new Challenge(
                             doc.id,
-                            doc.data().name,
-                            doc.data().startDate,
-                            doc.data().startDate,
-                            doc.data().rules,
-                            doc.data().status,
-
+                            startDate, endDate, rules, status, leaderboard
                         );
                         challengeArray.push(challenge);
                     });

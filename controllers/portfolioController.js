@@ -99,14 +99,12 @@ const getPortfolios = async (req, res, next) => {
             } else {
 
                 snapshot.forEach(doc => {
+
+                    const { id, userId, username, challengeId, stocks, submitTimestamp } = doc.data();
                     const portfolio = new Portfolio(
-                        doc.id,
-                        doc.data().userId,
-                        doc.data().username,
-                        doc.data().challengeId,
-                        doc.data().stocks,
-                        doc.data().submitTimestamp,
+                        id, userId, username, challengeId, stocks, submitTimestamp
                     );
+
                     portfolioArray.push(portfolio);
                 });
                 res.send(portfolioArray);
