@@ -79,9 +79,9 @@ const getPortfolios = async (req, res, next) => {
             } else {
 
                 snapshot.forEach(doc => {
-                    const { id, userId, username, challengeId, stocks, submitTimestamp } = doc.data();
+                    const {  userId, username, challengeId, stocks, submitTimestamp } = doc.data();
                     const portfolio = new Portfolio(
-                        id, userId, username, challengeId, stocks, submitTimestamp
+                        doc.id, userId, username, challengeId, stocks, submitTimestamp
                     );
                     portfolioArray.push(portfolio);
                 });
@@ -100,9 +100,9 @@ const getPortfolios = async (req, res, next) => {
 
                 snapshot.forEach(doc => {
 
-                    const { id, userId, username, challengeId, stocks, submitTimestamp } = doc.data();
+                    const { userId, username, challengeId, stocks, submitTimestamp } = doc.data();
                     const portfolio = new Portfolio(
-                        id, userId, username, challengeId, stocks, submitTimestamp
+                        doc.id, userId, username, challengeId, stocks, submitTimestamp
                     );
 
                     portfolioArray.push(portfolio);
