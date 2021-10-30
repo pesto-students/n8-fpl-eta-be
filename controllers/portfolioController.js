@@ -69,7 +69,7 @@ const getPortfolios = async (req, res, next) => {
             };
             break;
         case "user":
-            snapshot = await portfolioRef.where('userId', '==', id).orderBy('submitTimestamp', 'desc').get();
+            snapshot = await portfolioRef.where('uid', '==', id).orderBy('submitTimestamp', 'desc').get();
             if (snapshot.empty) {
                 try {
                     res.status(200).send(`{"status": "No records found"}`);
