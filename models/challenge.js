@@ -1,5 +1,5 @@
 class Challenge {
-    constructor(id,name, startDate, endDate, rules, status, stocks, awards, winningLeaderboard) {
+    constructor(id,name, startDate, endDate, rules, status, stocks, awards, leaderboard) {
         this.id = id;
         this.name = name;
         this.startDate = startDate;
@@ -8,7 +8,7 @@ class Challenge {
         this.status = status;
         this.stocks = stocks;
         this.awards = awards;
-        this.winningLeaderboard = winningLeaderboard;
+        this.leaderboard = leaderboard;
     }
 }
 

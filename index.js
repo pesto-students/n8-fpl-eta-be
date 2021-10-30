@@ -12,7 +12,7 @@ const { userAuth } = require('./controllers/userController');
 const admin = require('./firebase').firebaseAdmin;
 const challengeRoutes = require('./routes/challenge-routes');
 const portfolioRoutes = require('./routes/portfolio-routes');
-
+const stockLookupRoutes = require('./routes/stockLookup-routes');
 
 const app = express();
 
@@ -22,4 +22,6 @@ app.use(cookieParser());
 
 app.use('/api/challenge', challengeRoutes.routes);
 app.use('/api/portfolio', portfolioRoutes.routes);
+app.use('/api/lookup', stockLookupRoutes.routes);
+
 app.listen(config.port, () => console.log('App is listening on ' + config.port));

@@ -1,8 +1,10 @@
 'use strict';
 const dotenv = require('dotenv');
 const assert = require('assert');
+const path = require('path');
+dotenv.config({path:path.resolve(__dirname,"./.env")});
 
-dotenv.config();
+console.log(`${path.resolve(__dirname,"./.env")}`);
 
 const {
     PORT,
@@ -13,7 +15,8 @@ const {
     PROJECT_ID,
     STORAGE_BUCKET,
     MESSAGING_SENDER_ID,
-    APP_ID
+    APP_ID,
+    ALPHAVANTAGE_API_KEY
 } = process.env;
 
 assert(PORT, 'PORT is required');
@@ -30,5 +33,6 @@ module.exports = {
         storageBucket: STORAGE_BUCKET,
         messagingSenderId: MESSAGING_SENDER_ID,
         appId: APP_ID
-    }
+    },
+    alphavantageApiKey: ALPHAVANTAGE_API_KEY
 }

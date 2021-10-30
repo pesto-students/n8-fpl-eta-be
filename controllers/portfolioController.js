@@ -79,13 +79,32 @@ const getPortfolios = async (req, res, next) => {
             } else {
 
                 snapshot.forEach(doc => {
+                    const { id, userId, username, challengeId, stocks, submitTimestamp } = doc.data();
                     const portfolio = new Portfolio(
-                        doc.id,
-                        doc.data().userId,
-                        doc.data().challengeId,
-                        doc.data().stocks,
-                        doc.data().submitTimestamp,
+                        id, userId, username, challengeId, stocks, submitTimestamp
                     );
+                    portfolioArray.push(portfolio);
+                });
+                res.send(portfolioArray);
+            };
+            break;
+        case "user":
+            snapshot = await portfolioRef.where('uid', '==', id).orderBy('submitTimestamp', 'desc').get();
+            if (snapshot.empty) {
+                try {
+                    res.status(200).send(`{"status": "No records found"}`);
+                } catch (error) {
+                    res.status(400).send(`{"status": "FAIL", "message":${error}}`);
+                }
+            } else {
+
+                snapshot.forEach(doc => {
+
+                    const { id, userId, username, challengeId, stocks, submitTimestamp } = doc.data();
+                    const portfolio = new Portfolio(
+                        id, userId, username, challengeId, stocks, submitTimestamp
+                    );
+
                     portfolioArray.push(portfolio);
                 });
                 res.send(portfolioArray);
