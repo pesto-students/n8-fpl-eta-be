@@ -59,7 +59,6 @@ username: demo@pesto.com \
 password: demopresto
 
 ## Documents 
-Product Requirement Document :[FPL](https://drive.google.com/file/d/1Pd8VmqID5Ys5YQF64ecCNV5up6dmuHv_/view?usp=sharing) \
 UI Design : [Figma](https://www.figma.com/proto/8FqBYcwDPaKWRtAwmGl0nt/FPL?node-id=34%3A20&scaling=min-zoom&page-id=34%3A19&starting-point-node-id=34%3A20) \
 High Level Diagram : [HLD](https://drive.google.com/file/d/1iW1XGG8H2i9ffpqBp8cH03ebCsTm8qUo/view)
 
