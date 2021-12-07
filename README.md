@@ -73,14 +73,13 @@ password: demopresto
 
 ## Installation 
 
-### Deloy fpl-frontend app
+### Deloy fpl-backend app
 ```
 git clone https://github.com/pesto-students/n8-fpl-eta-be.git
 cd n8-fpl-eta-be
 npm install
 npm start
 ```
-> **_Please Note:_**  to deploy the frontend on local backend server please change the REACT_APP_API_SERVER to localhost:8080
 
 ## Contact 
 [Madan Patro](https://in.linkedin.com/in/madan-patro-1434916a) \
